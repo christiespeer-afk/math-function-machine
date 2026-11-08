@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Function machine</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500&display=swap">
+<style>
+:root{--bg:#F6F7FC;--ink:#1F2340;--muted:#566;--body:#EAE6FB;--body-line:#534AB7;--in:#DCEBFB;--in-line:#185FA5;--out:#DDF3EA;--out-line:#0F6E56;--gear:#F2B13D;--gear-line:#854F0B;--metal:#D3D1C7;--metal-line:#5F5E5A;--plate:#fff;--btn:#534AB7;--btn-ink:#fff;--card:#fff;--line:#C9CCE0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15172A;--ink:#EEF0FF;--muted:#A9AECB;--body:#2E2A5C;--body-line:#AFA9EC;--in:#0C447C;--in-line:#85B7EB;--out:#085041;--out-line:#5DCAA5;--gear:#BA7517;--gear-line:#FAC775;--metal:#444441;--metal-line:#B4B2A9;--plate:#22254A;--btn:#AFA9EC;--btn-ink:#26215C;--card:#1E2140;--line:#3A3E6B}}
+:root[data-theme="dark"]{--bg:#15172A;--ink:#EEF0FF;--muted:#A9AECB;--body:#2E2A5C;--body-line:#AFA9EC;--in:#0C447C;--in-line:#85B7EB;--out:#085041;--out-line:#5DCAA5;--gear:#BA7517;--gear-line:#FAC775;--metal:#444441;--metal-line:#B4B2A9;--plate:#22254A;--btn:#AFA9EC;--btn-ink:#26215C;--card:#1E2140;--line:#3A3E6B}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Fredoka",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.5;padding:20px 16px 28px}
+main{max-width:720px;margin:0 auto}
+h1{font-size:26px;font-weight:500;margin:0 0 4px}
+p.sub{margin:0 0 12px;color:var(--muted)}
+svg{width:100%;height:auto;display:block}
+.tag{font-size:15px;font-weight:500;fill:var(--ink)}
+.num{font-size:30px;font-weight:500}
+.lbl{font-size:16px;font-weight:500;fill:var(--ink)}
+.tk-in{fill:var(--in);stroke:var(--in-line);stroke-width:1.5}
+.tk-out{fill:var(--out);stroke:var(--out-line);stroke-width:1.5}
+.numtxt-in{fill:var(--in-line)}
+.numtxt-out{fill:var(--out-line)}
+.mbody{fill:var(--body);stroke:var(--body-line);stroke-width:1.5}
+.plate{fill:var(--plate);stroke:var(--body-line);stroke-width:1.5}
+.metal{fill:var(--metal);stroke:var(--metal-line);stroke-width:1}
+.slot{fill:var(--ink);opacity:.7}
+.gear-teeth{fill:none;stroke:var(--gear-line);stroke-width:6;stroke-dasharray:5 4}
+.gear-core{fill:var(--gear);stroke:var(--gear-line);stroke-width:1}
+.light{fill:var(--gear);stroke:var(--gear-line);stroke-width:1}
+.spinner{transform-box:fill-box;transform-origin:center}
+#tin{transition:transform .8s ease-in-out,opacity .3s ease .55s}
+#tin.go{transform:translateX(130px);opacity:0}
+#tin.snap{transition:none}
+#tout{transition:transform .6s ease-out,opacity .5s ease}
+#tout.hide{transform:translateX(-70px);opacity:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{50%{opacity:.25}}
+.run .spinner{animation:spin 1s linear infinite}
+.run .light{animation:blink .4s linear infinite}
+@media (prefers-reduced-motion:reduce){.run .spinner,.run .light{animation:none}#tin,#tout{transition:none}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.row label{font-weight:500}
+.step{display:inline-flex;align-items:center;gap:8px}
+button,select{font:inherit;color:var(--ink)}
+.sb{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:22px;cursor:pointer}
+.val{min-width:44px;text-align:center;font-size:24px;font-weight:500}
+select{padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);min-height:44px}
+#run{background:var(--btn);color:var(--btn-ink);border:0;border-radius:12px;padding:11px 22px;font-weight:500;cursor:pointer;min-height:44px}
+#run:disabled{opacity:.6;cursor:default}
+button:focus-visible,select:focus-visible{outline:3px solid var(--gear);outline-offset:2px}
+#cap{margin:12px 0 0;font-size:20px;font-weight:500;text-align:center;min-height:30px}
+#sent{margin:2px 0 0;text-align:center;color:var(--muted);min-height:26px}
+</style>
+</head>
+<body>
+<main>
+<h1>Function machine</h1>
+<p class="sub">An input goes in, the machine follows its rule, and an output comes out.</p>
+<svg viewBox="0 0 680 290" role="img" aria-label="Function machine: an input number enters, the rule changes it, and the output comes out on a belt.">
+<text class="tag" x="65" y="105" text-anchor="middle">INPUT</text>
+<text class="tag" x="605" y="105" text-anchor="middle">OUTPUT</text>
+<rect class="metal" x="228" y="238" width="36" height="22" rx="4"/>
+<rect class="metal" x="416" y="238" width="36" height="22" rx="4"/>
+<g id="mach">
+<rect class="mbody" x="200" y="50" width="280" height="190" rx="16"/>
+<circle class="light" cx="235" cy="74" r="8"/><circle class="light" cx="260" cy="74" r="8" style="animation-delay:.2s"/>
+<text class="tag" x="340" y="75" text-anchor="middle" dominant-baseline="central">RULE</text>
+<circle class="light" cx="420" cy="74" r="8" style="animation-delay:.2s"/><circle class="light" cx="445" cy="74" r="8"/>
+<rect class="plate" x="235" y="98" width="210" height="76" rx="8"/>
+<text class="lbl" id="rule" x="340" y="136" text-anchor="middle" dominant-baseline="central">Multiply by 3</text>
+<g class="spinner"><circle class="gear-teeth" cx="278" cy="208" r="17"/><circle class="gear-core" cx="278" cy="208" r="10"/></g>
+<g class="spinner" style="animation-direction:reverse"><circle class="gear-teeth" cx="340" cy="208" r="13" style="stroke-width:5;stroke-dasharray:4 4"/><circle class="gear-core" cx="340" cy="208" r="7"/></g>
+<g class="spinner"><circle class="gear-teeth" cx="402" cy="208" r="17"/><circle class="gear-core" cx="402" cy="208" r="10"/></g>
+</g>
+<rect class="slot" x="192" y="132" width="16" height="36" rx="3"/>
+<rect class="slot" x="472" y="132" width="16" height="36" rx="3"/>
+<g id="tin"><rect class="tk-in" x="30" y="120" width="70" height="60" rx="8"/><text class="num numtxt-in" id="inv" x="65" y="150" text-anchor="middle" dominant-baseline="central">4</text></g>
+<rect class="metal" x="490" y="182" width="150" height="16" rx="8"/>
+<circle class="metal" cx="498" cy="190" r="10"/><circle class="metal" cx="632" cy="190" r="10"/>
+<g id="tout"><rect class="tk-out" x="570" y="120" width="70" height="60" rx="8"/><text class="num numtxt-out" id="outv" x="605" y="150" text-anchor="middle" dominant-baseline="central">12</text></g>
+</svg>
+<p id="cap" aria-live="polite"></p>
+<p id="sent"></p>
+<div class="panel">
+<div class="row">
+<label for="rulesel">Rule</label>
+<select id="rulesel"><option value="mul3">Multiply by 3</option><option value="mul2">Multiply by 2</option><option value="mul10">Multiply by 10</option><option value="add5">Add 5</option></select>
+<span class="step"><label id="inlbl">Input</label>
+<button class="sb" id="minus" aria-label="Make the input smaller">−</button>
+<span class="val" id="val" aria-labelledby="inlbl">4</span>
+<button class="sb" id="plus" aria-label="Make the input bigger">+</button></span>
+<button id="run">Run the machine</button>
+</div>
+</div>
+</main>
+<script>
+var RULES={mul3:{t:"Multiply by 3",s:"×",k:3,f:function(x){return x*3}},mul2:{t:"Multiply by 2",s:"×",k:2,f:function(x){return x*2}},mul10:{t:"Multiply by 10",s:"×",k:10,f:function(x){return x*10}},add5:{t:"Add 5",s:"+",k:5,f:function(x){return x+5}}};
+var n=4,rk="mul3",busy=false;
+var $=function(i){return document.getElementById(i)};
+function showResult(){var r=RULES[rk],o=r.f(n);$("outv").textContent=o;$("outv").style.fontSize=String(o).length>2?"24px":"";$("cap").textContent=n+" "+r.s+" "+r.k+" = "+o;$("sent").textContent="The input is "+n+" and the output is "+o+".";}
+function reset(){var r=RULES[rk];$("rule").textContent=r.t;$("inv").textContent=n;$("val").textContent=n;$("outv").textContent="?";$("outv").style.fontSize="";$("cap").textContent="Press the button to run the machine.";$("sent").textContent="";}
+function change(d){if(busy)return;n=Math.max(0,Math.min(20,n+d));reset();}
+$("minus").onclick=function(){change(-1)};
+$("plus").onclick=function(){change(1)};
+$("rulesel").onchange=function(){if(busy)return;rk=this.value;reset();};
+$("run").onclick=function(){
+if(busy)return;busy=true;$("run").disabled=true;
+var tin=$("tin"),tout=$("tout"),m=$("mach").parentNode;
+reset();tout.classList.add("hide");
+setTimeout(function(){tin.classList.add("go")},50);
+setTimeout(function(){m.classList.add("run")},700);
+setTimeout(function(){m.classList.remove("run");showResult();tout.classList.remove("hide")},1900);
+setTimeout(function(){tin.classList.add("snap");tin.classList.remove("go");void tin.getBoundingClientRect();tin.classList.remove("snap");busy=false;$("run").disabled=false},2600);
+};
+showResult();
+</script>
+</body>
+</html>
